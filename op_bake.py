@@ -23,7 +23,7 @@ modes={
 	'selection':		ub.BakeMode('bake_vertex_color',type='EMIT', 	color=(0, 0, 0, 1), setVColor=ub.setup_vertex_color_selection),
 	'diffuse':			ub.BakeMode('',					type='DIFFUSE'),
 	# 'displacment':		ub.BakeMode('',					type='DISPLACEMENT', use_project=True, color=(0, 0, 0, 1), engine='CYCLES'),
-	'ao':				ub.BakeMode('',					type='AO', 		params=["bake_samples"], engine='CYCLES'),
+	'ao':				ub.BakeMode('',					type='AO', 		color=(1, 1, 1, 0), params=["bake_samples"], engine='CYCLES'),
 	'ao_legacy':		ub.BakeMode('',					type='AO', 		params=["bake_samples"], engine='CYCLES'),
 	'position':			ub.BakeMode('bake_position',	type='EMIT'),
 	'curvature':		ub.BakeMode('',					type='NORMAL',	use_project=True, params=["bake_curvature_size"], composite="curvature"),
