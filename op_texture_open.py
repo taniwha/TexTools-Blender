@@ -2,7 +2,9 @@ import bpy
 import bmesh
 import operator
 import math
-import os, sys, subprocess
+import os
+import sys
+import subprocess
 
 from . import settings
 from . import utilities_bake
@@ -13,19 +15,18 @@ class op(bpy.types.Operator):
     bl_label = "Open Texture"
     bl_description = "Open the texture on the system"
 
-    name : bpy.props.StringProperty(
+    name: bpy.props.StringProperty(
         name="image name",
-        default = ""
+        default=""
     )
 
     @classmethod
     def poll(cls, context):
         return True
-    
+
     def execute(self, context):
         open_texture(self, context)
         return {'FINISHED'}
-
 
 
 def open_texture(self, context):
@@ -33,7 +34,7 @@ def open_texture(self, context):
     print("Info")
     if self.name in bpy.data.images:
         image = bpy.data.images[self.name]
-        
+
         if image.filepath != "":
             path = bpy.path.abspath(image.filepath)
             # https://meshlogic.github.io/posts/blender/addons/extra-image-list/
@@ -43,7 +44,7 @@ def open_texture(self, context):
             if sys.platform == "win32":
                 os.startfile(path)
             else:
-                opener ="open" if sys.platform == "darwin" else "xdg-open"
+                opener = "open" if sys.platform == "darwin" else "xdg-open"
                 subprocess.call([opener, path])
 
 

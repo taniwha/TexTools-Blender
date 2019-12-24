@@ -43,20 +43,18 @@ def assign_color(index):
     material = get_material(index)
     if material:
         # material.use_nodes = False
-        
+
         rgb = get_color(index)
         rgba = (rgb[0], rgb[1], rgb[2], 1)
 
-        if material.use_nodes and bpy.context.scene.render.engine == 'CYCLES' or material.use_nodes and bpy.context.scene.render.engine == 'BLENDER_EEVEE' :
+        if material.use_nodes and bpy.context.scene.render.engine == 'CYCLES' or material.use_nodes and bpy.context.scene.render.engine == 'BLENDER_EEVEE':
             # Cycles material (Preferred for baking)
             material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = rgba
             material.diffuse_color = rgba
 
-
         elif not material.use_nodes and bpy.context.scene.render.engine == 'BLENDER_EEVEE':
             # Legacy render engine, not suited for baking
             material.diffuse_color = rgba
-
 
 
 def get_material(index):
@@ -64,7 +62,7 @@ def get_material(index):
 
     # Material already exists?
     if name in bpy.data.materials:
-        material = bpy.data.materials[name];
+        material = bpy.data.materials[name]
 
         # Check for incorrect matreials for current render engine
         if not material:
@@ -77,14 +75,13 @@ def get_material(index):
             replace_material(index)
 
         else:
-            return material;
+            return material
 
     print("Could nt find {} , create a new one??".format(name))
 
     material = create_material(index)
     assign_color(index)
     return material
-
 
 
 # Replaace an existing material with a new one
@@ -96,11 +93,11 @@ def replace_material(index):
 
     # Check if material exists
     if name in bpy.data.materials:
-        material = bpy.data.materials[name];
+        material = bpy.data.materials[name]
 
         # Collect material slots we have to re-assign
         slots = []
-        for obj in bpy.context.view_layer.objects: 
+        for obj in bpy.context.view_layer.objects:
             for slot in obj.material_slots:
                 if slot.material == material:
                     slots.append(slot)
@@ -108,12 +105,11 @@ def replace_material(index):
         # Get new material
         material.user_clear()
         bpy.data.materials.remove(material)
-        
+
         # Re-assign new material to all previous slots
         material = create_material(index)
         for slot in slots:
-            slot.material = material;
-
+            slot.material = material
 
 
 def create_material(index):
@@ -125,15 +121,13 @@ def create_material(index):
 
     if bpy.context.scene.render.engine == 'CYCLES':
         # Cycles: prefer nodes as it simplifies baking
-        material.use_nodes = True 
+        material.use_nodes = True
 
     return material
 
 
-
 def get_name(index):
     return (material_prefix+"{:02d}").format(index)
-
 
 
 def get_color(index):
@@ -144,16 +138,15 @@ def get_color(index):
     return (0, 0, 0)
 
 
-
 def set_color(index, color):
     if index < bpy.context.scene.texToolsSettings.color_ID_count:
-        setattr(bpy.context.scene.texToolsSettings, "color_ID_color_{}".format(index), color)
-
+        setattr(bpy.context.scene.texToolsSettings,
+                "color_ID_color_{}".format(index), color)
 
 
 def validate_face_colors(obj):
     # Validate face colors and material slots
-    previous_mode = bpy.context.object.mode;
+    previous_mode = bpy.context.object.mode
     count = bpy.context.scene.texToolsSettings.color_ID_count
 
     # Verify enough material slots
@@ -165,12 +158,11 @@ def validate_face_colors(obj):
             else:
                 break
 
-
     # TODO: Check face.material_index
     bpy.ops.object.mode_set(mode='EDIT')
-    bm = bmesh.from_edit_mesh(obj.data);
+    bm = bmesh.from_edit_mesh(obj.data)
     for face in bm.faces:
-        face.material_index%= count
+        face.material_index %= count
     obj.data.update()
 
     # Remove material slots that are not used
@@ -179,19 +171,16 @@ def validate_face_colors(obj):
         for i in range(len(obj.material_slots) - count):
             if len(obj.material_slots) > count:
                 # Remove last
-                bpy.context.object.active_material_index = len(obj.material_slots)-1
+                bpy.context.object.active_material_index = len(
+                    obj.material_slots)-1
                 bpy.ops.object.material_slot_remove()
-
-
-
 
     # Restore previous mode
     bpy.ops.object.mode_set(mode=previous_mode)
 
 
-
 def hex_to_color(hex):
-    
+
     hex = hex.strip('#')
     lv = len(hex)
     fin = list(int(hex[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
@@ -205,23 +194,21 @@ def hex_to_color(hex):
     return tuple(fin)
 
 
-
 def color_to_hex(color):
     rgb = []
     for i in range(3):
-        rgb.append( pow(color[i] , 1.0/gamma) )
+        rgb.append(pow(color[i], 1.0/gamma))
 
     r = int(rgb[0]*255)
     g = int(rgb[1]*255)
     b = int(rgb[2]*255)
 
-    return "#{:02X}{:02X}{:02X}".format(r,g,b)
-
+    return "#{:02X}{:02X}{:02X}".format(r, g, b)
 
 
 def get_color_id(index, count):
     # Get unique color
     color = Color()
-    color.hsv = ( index / (count) ), 0.9, 1.0
-    
+    color.hsv = (index / (count)), 0.9, 1.0
+
     return color

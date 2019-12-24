@@ -12,27 +12,26 @@ from . import utilities_color
 # from . import op_bake
 
 
-keywords_low = ['lowpoly','low','lowp','lp','lo','l']
-keywords_high = ['highpoly','high','highp','hp','hi','h']
-keywords_cage = ['cage','c']
-keywords_float = ['floater','float','f']
+keywords_low = ['lowpoly', 'low', 'lowp', 'lp', 'lo', 'l']
+keywords_high = ['highpoly', 'high', 'highp', 'hp', 'hi', 'h']
+keywords_cage = ['cage', 'c']
+keywords_float = ['floater', 'float', 'f']
 
-split_chars = [' ','_','.','-']
-
+split_chars = [' ', '_', '.', '-']
 
 
 class BakeMode:
-    material = ""                    #Material name from external blend file
+    material = ""  # Material name from external blend file
     type = 'EMIT'
     normal_space = 'TANGENT'
-    setVColor = None                #Set Vertex color method
-    color = (0.23, 0.23, 0.23, 1)    #Background color
-    engine = 'CYCLES'                #render engine, by default CYCLES
-    composite = None                #use composite scene to process end result
-    use_project = False                #Bake projected?
-    params = []                        #UI Parameters from scene settings
+    setVColor = None  # Set Vertex color method
+    color = (0.23, 0.23, 0.23, 1)  # Background color
+    engine = 'CYCLES'  # render engine, by default CYCLES
+    composite = None  # use composite scene to process end result
+    use_project = False  # Bake projected?
+    params = []  # UI Parameters from scene settings
 
-    def __init__(self, material="", type='EMIT', normal_space='TANGENT', setVColor=None, color= (0.23, 0.23, 0.23, 1), engine='CYCLES', params = [], composite=None, use_project=False):
+    def __init__(self, material="", type='EMIT', normal_space='TANGENT', setVColor=None, color=(0.23, 0.23, 0.23, 1), engine='CYCLES', params=[], composite=None, use_project=False):
         self.material = material
         self.type = type
         self.normal_space = normal_space
@@ -42,7 +41,6 @@ class BakeMode:
         self.params = params
         self.composite = composite
         self.use_project = use_project
-
 
 
 def on_select_bake_mode(mode):
@@ -81,8 +79,6 @@ def store_bake_settings():
 
     settings.bake_objects_hide_render = []
 
-
-
     # for obj in bpy.context.view_layer.objects:
     #     if obj.hide_render == False and obj not in objects_sets:
     #             Check if layer is active:
@@ -94,7 +90,6 @@ def store_bake_settings():
     for obj in settings.bake_objects_hide_render:
         obj.hide_render = True
         # obj.cycles_visibility.shadow = False
-
 
 
 def restore_bake_settings():
@@ -111,13 +106,13 @@ def restore_bake_settings():
             # obj.cycles_visibility.shadow = True
 
 
-
 stored_materials = {}
 stored_material_faces = {}
+
+
 def store_materials_clear():
     stored_materials.clear()
     stored_material_faces.clear()
-
 
 
 def store_materials(obj):
@@ -126,28 +121,28 @@ def store_materials(obj):
 
     # Enter edit mode
     bpy.ops.object.select_all(action='DESELECT')
-    obj.select_set( state = True, view_layer = None)
+    obj.select_set(state=True, view_layer=None)
     bpy.context.view_layer.objects.active = obj
 
     bpy.ops.object.mode_set(mode='EDIT')
-    bm = bmesh.from_edit_mesh(obj.data);
+    bm = bmesh.from_edit_mesh(obj.data)
 
-    # for each slot backup the material 
+    # for each slot backup the material
     for s in range(len(obj.material_slots)):
         slot = obj.material_slots[s]
 
         stored_materials[obj].append(slot.material)
-        stored_material_faces[obj].append( [face.index for face in bm.faces if face.material_index == s] )
-        
+        stored_material_faces[obj].append(
+            [face.index for face in bm.faces if face.material_index == s])
+
         # print("Faces: {}x".format( len(stored_material_faces[obj][-1])  ))
 
         if slot and slot.material:
             slot.material.name = "backup_"+slot.material.name
-            print("- Store {} = {}".format(obj.name,slot.material.name))
+            print("- Store {} = {}".format(obj.name, slot.material.name))
 
     # Back to object mode
     bpy.ops.object.mode_set(mode='OBJECT')
-
 
 
 def restore_materials():
@@ -155,15 +150,15 @@ def restore_materials():
         # Enter edit mode
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.mode_set(mode='EDIT')
-        bm = bmesh.from_edit_mesh(obj.data);
+        bm = bmesh.from_edit_mesh(obj.data)
 
         # Restore slots
         for index in range(len(stored_materials[obj])):
             material = stored_materials[obj][index]
             faces = stored_material_faces[obj][index]
-            
+
             if material:
-                material.name = material.name.replace("backup_","")
+                material.name = material.name.replace("backup_", "")
                 obj.material_slots[index].material = material
 
                 # Face material indexies
@@ -180,12 +175,11 @@ def restore_materials():
                 bpy.ops.object.material_slot_remove()
 
 
-
 def get_set_name_base(obj):
 
     def remove_digits(name):
         # Remove blender naming digits, e.g. cube.001, cube.002,...
-        if len(name)>= 4 and name[-4] == '.' and name[-3].isdigit() and name[-2].isdigit() and name[-1].isdigit():
+        if len(name) >= 4 and name[-4] == '.' and name[-3].isdigit() and name[-2].isdigit() and name[-1].isdigit():
             return name[:-4]
         return name
 
@@ -202,7 +196,6 @@ def get_set_name_base(obj):
         return remove_digits(obj.name).lower()
 
 
-
 def get_set_name(obj):
     # Get Basic name
     name = get_set_name_base(obj)
@@ -210,7 +203,7 @@ def get_set_name(obj):
     # Split by ' ','_','.' etc.
     split = name.lower()
     for char in split_chars:
-        split = split.replace(char,' ')
+        split = split.replace(char, ' ')
     strings = split.split(' ')
 
     # Remove all keys from name
@@ -231,7 +224,6 @@ def get_set_name(obj):
     return "_".join(new_strings)
 
 
-
 def get_object_type(obj):
 
     name = get_set_name_base(obj)
@@ -239,11 +231,11 @@ def get_object_type(obj):
     # Detect by name pattern
     split = name.lower()
     for char in split_chars:
-        split = split.replace(char,' ')
+        split = split.replace(char, ' ')
     strings = split.split(' ')
 
     # Detect float, more rare than low
-    for string in strings:        
+    for string in strings:
         for key in keywords_float:
             if key == string:
                 return 'float'
@@ -257,20 +249,17 @@ def get_object_type(obj):
                 elif modifier.type == 'BEVEL':
                     return 'high'
 
-
     # Detect High first, more rare
     for string in strings:
         for key in keywords_high:
             if key == string:
                 return 'high'
-    
+
     # Detect cage, more rare than low
-    for string in strings:        
+    for string in strings:
         for key in keywords_cage:
             if key == string:
                 return 'cage'
-
-    
 
     # Detect low
     for string in strings:
@@ -278,10 +267,8 @@ def get_object_type(obj):
             if key == string:
                 return 'low'
 
-
     # if nothing was detected, assume its low
     return 'low'
-
 
 
 def get_baked_images(sets):
@@ -295,19 +282,18 @@ def get_baked_images(sets):
     return images
 
 
-
 def get_bake_sets():
     filtered = {}
     for obj in bpy.context.selected_objects:
         if obj.type == 'MESH':
             filtered[obj] = get_object_type(obj)
-    
+
     groups = []
     # Group by names
     for obj in filtered:
         name = get_set_name(obj)
 
-        if len(groups)==0:
+        if len(groups) == 0:
             groups.append([obj])
         else:
             isFound = False
@@ -330,10 +316,9 @@ def get_bake_sets():
             if key == get_set_name(group[0]):
                 sorted_groups.append(group)
                 break
-                
-    groups = sorted_groups            
-    # print("Keys: "+", ".join(keys))
 
+    groups = sorted_groups
+    # print("Keys: "+", ".join(keys))
 
     bake_sets = []
     for group in groups:
@@ -351,19 +336,17 @@ def get_bake_sets():
             elif filtered[obj] == 'float':
                 float.append(obj)
 
-
         name = get_set_name(group[0])
         bake_sets.append(BakeSet(name, low, cage, high, float))
 
     return bake_sets
 
 
-
 class BakeSet:
-    objects_low = []    #low poly geometry
-    objects_cage = []    #Cage low poly geometry
-    objects_high = []    #High poly geometry
-    objects_float = []    #Floating geometry
+    objects_low = []  # low poly geometry
+    objects_cage = []  # Cage low poly geometry
+    objects_high = []  # High poly geometry
+    objects_float = []  # Floating geometry
     name = ""
 
     has_issues = False
@@ -390,14 +373,12 @@ class BakeSet:
                 break
 
 
-
 def setup_vertex_color_selection(obj):
     bpy.ops.object.mode_set(mode='OBJECT')
 
     bpy.ops.object.select_all(action='DESELECT')
-    obj.select_set( state = True, view_layer = None)
+    obj.select_set(state=True, view_layer=None)
     bpy.context.view_layer.objects.active = obj
-    
 
     bpy.ops.object.mode_set(mode='VERTEX_PAINT')
 
@@ -415,26 +396,24 @@ def setup_vertex_color_selection(obj):
     bpy.ops.object.mode_set(mode='OBJECT')
 
 
-
 def setup_vertex_color_dirty(obj):
 
     print("setup_vertex_color_dirty {}".format(obj.name))
 
     bpy.ops.object.select_all(action='DESELECT')
-    obj.select_set( state = True, view_layer = None)
+    obj.select_set(state=True, view_layer=None)
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.mode_set(mode='EDIT')
 
-    # Fill white then, 
+    # Fill white then,
     bm = bmesh.from_edit_mesh(obj.data)
     colorLayer = bm.loops.layers.color.verify()
 
-
-    color = utilities_color.safe_color( (1, 1, 1) )
+    color = utilities_color.safe_color((1, 1, 1))
 
     for face in bm.faces:
         for loop in face.loops:
-                loop[colorLayer] = color
+            loop[colorLayer] = color
     obj.data.update()
 
     # Back to object mode
@@ -443,12 +422,10 @@ def setup_vertex_color_dirty(obj):
     bpy.ops.paint.vertex_color_dirt()
 
 
-
 def setup_vertex_color_id_material(obj):
     bpy.ops.object.select_all(action='DESELECT')
-    obj.select_set( state = True, view_layer = None)
+    obj.select_set(state=True, view_layer=None)
     bpy.context.view_layer.objects.active = obj
-
 
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='FACE')
@@ -482,10 +459,9 @@ def setup_vertex_color_id_material(obj):
     bpy.ops.object.mode_set(mode='OBJECT')
 
 
-
 def setup_vertex_color_id_element(obj):
     bpy.ops.object.select_all(action='DESELECT')
-    obj.select_set( state = True, view_layer = None)
+    obj.select_set(state=True, view_layer=None)
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.mode_set(mode='EDIT')
 
@@ -510,9 +486,9 @@ def setup_vertex_color_id_element(obj):
             groups.append(linked)
 
     # Color each group
-    for i in range(0,len(groups)):
+    for i in range(0, len(groups)):
         color = utilities_color.get_color_id(i, len(groups))
-        color = utilities_color.safe_color( color )
+        color = utilities_color.safe_color(color)
         for face in groups[i]:
             for loop in face.loops:
                 loop[colorLayer] = color
@@ -535,7 +511,6 @@ def get_image_material(image):
     else:
         material = bpy.data.materials.new(image.name)
 
-
     # Cyles Material
     if bpy.context.scene.render.engine == 'CYCLES' or bpy.context.scene.render.engine == 'BLENDER_EEVEE':
         material.use_nodes = True
@@ -551,9 +526,8 @@ def get_image_material(image):
         node_image.image = image
         material.node_tree.nodes.active = node_image
 
-        #Base Diffuse BSDF
+        # Base Diffuse BSDF
         node_diffuse = material.node_tree.nodes['Principled BSDF']
-
 
         if "_normal_" in image.name:
             # Add Normal Map Nodes
@@ -561,7 +535,8 @@ def get_image_material(image):
             if "normal_map" in material.node_tree.nodes:
                 node_normal_map = material.node_tree.nodes["normal_map"]
             else:
-                node_normal_map = material.node_tree.nodes.new("ShaderNodeNormalMap")
+                node_normal_map = material.node_tree.nodes.new(
+                    "ShaderNodeNormalMap")
                 node_normal_map.name = "normal_map"
 
             # Tangent or World space
@@ -571,10 +546,12 @@ def get_image_material(image):
                 node_normal_map.space = 'WORLD'
 
             # image to normal_map link
-            material.node_tree.links.new(node_image.outputs[0], node_normal_map.inputs[1])
+            material.node_tree.links.new(
+                node_image.outputs[0], node_normal_map.inputs[1])
 
             # normal_map to diffuse_bsdf link
-            material.node_tree.links.new(node_normal_map.outputs[0], node_diffuse.inputs[19])
+            material.node_tree.links.new(
+                node_normal_map.outputs[0], node_diffuse.inputs[19])
 
             node_normal_map.location = node_diffuse.location - Vector((200, 0))
             node_image.location = node_normal_map.location - Vector((200, 0))
@@ -582,15 +559,16 @@ def get_image_material(image):
         else:
             # Other images display as Color
             # dump(node_image.color_mapping.bl_rna.property_tags)
-            
+
             # image node to diffuse node link
-            material.node_tree.links.new(node_image.outputs[0], node_diffuse.inputs[0])
+            material.node_tree.links.new(
+                node_image.outputs[0], node_diffuse.inputs[0])
 
         return material
 
     elif bpy.context.scene.render.engine == 'BLENDER_EEVEE':
         material.use_nodes = True
-        
+
         texture = None
         if image.name in bpy.data.textures:
             texture = bpy.data.textures[image.name]
@@ -600,6 +578,6 @@ def get_image_material(image):
         texture.image = image
         slot = material.texture_slot.add()
         slot.texture = texture
-        slot.mapping = 'FLAT' 
+        slot.mapping = 'FLAT'
 
     # return material

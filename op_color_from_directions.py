@@ -7,25 +7,25 @@ from math import pi
 
 from . import utilities_color
 
+
 class op(bpy.types.Operator):
     bl_idname = "uv.textools_color_from_directions"
     bl_label = "Color Directions"
     bl_description = "Assign a color ID to different face directions"
     bl_options = {'REGISTER', 'UNDO'}
-    
-    directions : bpy.props.EnumProperty(items= 
-        [('2', '2', 'Top & Bottom, Sides'),
-        ('3', '3', 'Top & Bottom, Left & Right, Front & Back'), 
-        ('4', '4', 'Top, Left & Right, Front & Back, Bottom'),
-        ('6', '6', 'All sides')], 
-        name = "Directions", 
-        default = '3'
-    )
+
+    directions: bpy.props.EnumProperty(items=[('2', '2', 'Top & Bottom, Sides'),
+                                              ('3', '3', 'Top & Bottom, Left & Right, Front & Back'),
+                                              ('4', '4', 'Top, Left & Right, Front & Back, Bottom'),
+                                              ('6', '6', 'All sides')],
+                                       name="Directions",
+                                       default='3'
+                                       )
+
     def invoke(self, context, event):
         wm = context.window_manager
         return wm.invoke_props_dialog(self)
 
-        
     # def draw(self, context):
     #     layout = self.layout
     #     layout.prop(self, "directions")
@@ -44,42 +44,38 @@ class op(bpy.types.Operator):
         if bpy.context.active_object.type != 'MESH':
             return False
 
-        #Only in UV editor mode
+        # Only in UV editor mode
         if bpy.context.area.type != 'IMAGE_EDITOR':
             return False
 
         return True
-    
+
     def execute(self, context):
         color_elements(self, context)
         return {'FINISHED'}
 
 
-
 def color_elements(self, context):
     obj = bpy.context.active_object
-    
+
     # Setup Edit & Face mode
     if obj.mode != 'EDIT':
         bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='FACE')
-    
-    # Collect groups
-    bm = bmesh.from_edit_mesh(bpy.context.active_object.data);
 
+    # Collect groups
+    bm = bmesh.from_edit_mesh(bpy.context.active_object.data)
 
     face_directions = {
-        'top':[], 
-        'bottom':[],
-        'left':[], 
-        'right':[],
-        'front':[], 
-        'back':[]
+        'top': [],
+        'bottom': [],
+        'left': [],
+        'right': [],
+        'front': [],
+        'back': []
     }
-    
 
     print("Directions {}".format(self.directions))
-
 
     for face in bm.faces:
         print("face {} n: {}".format(face.index, face.normal))
@@ -114,7 +110,8 @@ def color_elements(self, context):
 
     if self.directions == '2':
         groups.append(face_directions['top']+face_directions['bottom'])
-        groups.append(face_directions['left']+face_directions['right']+face_directions['front']+face_directions['back'])
+        groups.append(face_directions['left']+face_directions['right'] +
+                      face_directions['front']+face_directions['back'])
     if self.directions == '3':
         groups.append(face_directions['top']+face_directions['bottom'])
         groups.append(face_directions['left']+face_directions['right'])
@@ -136,8 +133,8 @@ def color_elements(self, context):
     index_color = 0
     for group in groups:
         # # rebuild bmesh data (e.g. left edit mode previous loop)
-        bm = bmesh.from_edit_mesh(bpy.context.active_object.data);
-        if hasattr(bm.faces, "ensure_lookup_table"): 
+        bm = bmesh.from_edit_mesh(bpy.context.active_object.data)
+        if hasattr(bm.faces, "ensure_lookup_table"):
             bm.faces.ensure_lookup_table()
 
         # Select group
@@ -148,7 +145,8 @@ def color_elements(self, context):
         # Assign to selection
         bpy.ops.uv.textools_color_assign(index=index_color)
 
-        index_color = (index_color+1) % bpy.context.scene.texToolsSettings.color_ID_count
+        index_color = (
+            index_color+1) % bpy.context.scene.texToolsSettings.color_ID_count
 
     bpy.ops.object.mode_set(mode='OBJECT')
     utilities_color.validate_face_colors(obj)
@@ -202,5 +200,6 @@ def color_elements(self, context):
     bpy.ops.object.mode_set(mode='OBJECT')
     utilities_color.validate_face_colors(obj)
     '''
+
 
 bpy.utils.register_class(op)

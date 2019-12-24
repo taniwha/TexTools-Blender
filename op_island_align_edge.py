@@ -8,15 +8,16 @@ from math import pi
 
 from . import utilities_uv
 
+
 class op(bpy.types.Operator):
     bl_idname = "uv.textools_island_align_edge"
     bl_label = "Align Island by Edge"
     bl_description = "Align the island by selected edge"
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     @classmethod
     def poll(cls, context):
-        #Only in UV editor mode
+        # Only in UV editor mode
         if bpy.context.area.type != 'IMAGE_EDITOR':
             return False
 
@@ -26,35 +27,33 @@ class op(bpy.types.Operator):
         if bpy.context.active_object.type != 'MESH':
             return False
 
-        #Only in Edit mode
+        # Only in Edit mode
         if bpy.context.active_object.mode != 'EDIT':
             return False
 
         if bpy.context.scene.tool_settings.use_uv_select_sync:
             return False
 
-        #Requires UV map
+        # Requires UV map
         if not bpy.context.object.data.uv_layers:
             return False
 
         # Requires UV Edge select mode
         if bpy.context.scene.tool_settings.uv_select_mode != 'EDGE':
-             return False
+            return False
 
         return True
 
-
     def execute(self, context):
-        #Store selection
+        # Store selection
         utilities_uv.selection_store()
 
         main(context)
 
-        #Restore selection
+        # Restore selection
         utilities_uv.selection_restore()
 
         return {'FINISHED'}
-
 
 
 def main(context):
@@ -62,15 +61,15 @@ def main(context):
 
     bm = bmesh.from_edit_mesh(bpy.context.active_object.data)
     uv_layers = bm.loops.layers.uv.verify()
-    
-    faces_selected = [];
+
+    faces_selected = []
     for face in bm.faces:
         if face.select:
             for loop in face.loops:
                 if loop[uv_layers].select:
                     faces_selected.append(face)
                     break
-    
+
     print("faces_selected: "+str(len(faces_selected)))
 
     # Collect 2 uv verts for each island
@@ -91,11 +90,11 @@ def main(context):
         if face in faces_unparsed:
 
             bpy.ops.uv.select_all(action='DESELECT')
-            face_uvs[face][0].select = True;
-            bpy.ops.uv.select_linked()#Extend selection
-            
-            #Collect faces
-            faces_island = [face];
+            face_uvs[face][0].select = True
+            bpy.ops.uv.select_linked()  # Extend selection
+
+            # Collect faces
+            faces_island = [face]
             for f in faces_unparsed:
                 if f != face and f.select and f.loops[0][uv_layers].select:
                     print("append "+str(f.index))
@@ -103,14 +102,15 @@ def main(context):
             for f in faces_island:
                 faces_unparsed.remove(f)
 
-            #Assign Faces to island
+            # Assign Faces to island
             faces_islands[face] = faces_island
 
     print("Sets: {}x".format(len(faces_islands)))
 
     # Align each island to its edges
     for face in faces_islands:
-        align_island(face_uvs[face][0].uv, face_uvs[face][1].uv, faces_islands[face])
+        align_island(face_uvs[face][0].uv, face_uvs[face]
+                     [1].uv, faces_islands[face])
 
 
 def align_island(uv_vert0, uv_vert1, faces):
@@ -126,7 +126,7 @@ def align_island(uv_vert0, uv_vert1, faces):
             loop[uv_layers].select = True
 
     diff = uv_vert1 - uv_vert0
-    angle = math.atan2(diff.y, diff.x)%(math.pi/2)
+    angle = math.atan2(diff.y, diff.x) % (math.pi/2)
 
     bpy.ops.uv.select_linked()
 
@@ -136,7 +136,8 @@ def align_island(uv_vert0, uv_vert1, faces):
     if angle >= (math.pi/4):
         angle = angle - (math.pi/2)
 
-    bpy.ops.transform.rotate(value=angle, orient_axis='Z', constraint_axis=(False, False, False), orient_type='GLOBAL', mirror=False, use_proportional_edit=False)
+    bpy.ops.transform.rotate(value=angle, orient_axis='Z', constraint_axis=(
+        False, False, False), orient_type='GLOBAL', mirror=False, use_proportional_edit=False)
 
 
 bpy.utils.register_class(op)

@@ -8,12 +8,13 @@ from math import pi
 from . import utilities_uv
 from . import utilities_ui
 
+
 class op(bpy.types.Operator):
     bl_idname = "uv.textools_unwrap_edge_peel"
     bl_label = "Peel Edge"
     bl_description = "Unwrap pipe along selected edges"
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     @classmethod
     def poll(cls, context):
 
@@ -23,7 +24,7 @@ class op(bpy.types.Operator):
         if bpy.context.active_object.type != 'MESH':
             return False
 
-        #Only in Edit mode
+        # Only in Edit mode
         if bpy.context.active_object.mode != 'EDIT':
             return False
 
@@ -43,10 +44,10 @@ def unwrap_edges_pipe(self, context):
     bm = bmesh.from_edit_mesh(bpy.context.active_object.data)
     uv_layers = bm.loops.layers.uv.verify()
 
-
     contextViewUV = utilities_ui.GetContextViewUV()
     if not contextViewUV:
-        self.report({'ERROR_INVALID_INPUT'}, "This tool requires an available UV/Image view.")
+        self.report({'ERROR_INVALID_INPUT'},
+                    "This tool requires an available UV/Image view.")
         return
 
     # selected_initial = [edge for edge in bm.edges if edge.select]
@@ -58,7 +59,7 @@ def unwrap_edges_pipe(self, context):
     selected_edges = [edge for edge in bm.edges if edge.select]
 
     if len(selected_edges) == 0:
-        self.report({'ERROR_INVALID_INPUT'}, "No edges selected in the view" )
+        self.report({'ERROR_INVALID_INPUT'}, "No edges selected in the view")
         return
 
     # Convert linked selection to single UV island
@@ -68,7 +69,7 @@ def unwrap_edges_pipe(self, context):
     selected_faces = [face for face in bm.faces if face.select]
 
     if len(selected_faces) == 0:
-        self.report({'ERROR_INVALID_INPUT'}, "No faces available" )
+        self.report({'ERROR_INVALID_INPUT'}, "No faces available")
         return
 
     # Mark previous selected edges as Seam
@@ -91,5 +92,6 @@ def unwrap_edges_pipe(self, context):
 
     # TODO: Restore initial selection
     bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='EDGE')
+
 
 bpy.utils.register_class(op)
