@@ -465,8 +465,6 @@ class TexToolsSettings(bpy.types.PropertyGroup):
         min = 1,
         max = 16
     )
-
-
     bake_ray_distance : bpy.props.FloatProperty(
         name = "Ray Dist.",
         description = "Ray distance when baking. When using cage used as extrude distance",
@@ -477,6 +475,16 @@ class TexToolsSettings(bpy.types.PropertyGroup):
     bake_force_single : bpy.props.BoolProperty(
         name="Single Texture",
         description="Force a single texture bake accross all selected objects",
+        default = False
+    )
+    bake_exclude_others: bpy.props.BoolProperty(
+        name="Exclude Others",
+        description="Exclude deselected objects when rendering",
+        default = False
+    )
+    bake_merge_object: bpy.props.BoolProperty(
+        name="Merge Objects",
+        description="Merge selected objects when rendering, results in significantly lower bake times",
         default = False
     )
     bake_sampling : bpy.props.EnumProperty(items= 
