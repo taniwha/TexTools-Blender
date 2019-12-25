@@ -874,8 +874,13 @@ class UI_PT_Panel_Bake(bpy.types.Panel):
 
         col.separator()
 
+        row = col.row(align=True)
+        row.prop(context.scene.texToolsSettings, "bake_exclude_others", text="Only Selected")
 
-        # Collected Related Textures
+        #row = col.row(align=True)
+        #row.prop(context.scene.texToolsSettings, "bake_merge_object", text="Merge Selected")
+
+
         col.separator()
         
         row = col.row(align=True)

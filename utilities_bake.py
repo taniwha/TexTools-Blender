@@ -79,18 +79,11 @@ def store_bake_settings():
 
     settings.bake_objects_hide_render = []
 
-    # for obj in bpy.context.view_layer.objects:
-    #     if obj.hide_render == False and obj not in objects_sets:
-    #             Check if layer is active:
-    #         for l in range(0, len(obj.layers)):
-    #             if obj.layers[l] and bpy.context.scene.layers[l]:
-    #                 settings.bake_objects_hide_render.append(obj)
-    #                 break #sav
-
-    for obj in settings.bake_objects_hide_render:
-        obj.hide_render = True
-        # obj.cycles_visibility.shadow = False
-
+    if bpy.context.scene.texToolsSettings.bake_exclude_others:
+        for obj in bpy.context.view_layer.objects:
+            if obj.hide_render == False and obj not in objects_sets:
+                settings.bake_objects_hide_render.append(obj)
+                obj.hide_render = True;
 
 def restore_bake_settings():
     # Render Settings
@@ -103,7 +96,6 @@ def restore_bake_settings():
     for obj in settings.bake_objects_hide_render:
         if obj:
             obj.hide_render = False
-            # obj.cycles_visibility.shadow = True
 
 
 stored_materials = {}
