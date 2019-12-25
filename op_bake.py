@@ -571,13 +571,3 @@ def cycles_bake(mode, padding, sampling_scale, samples, ray_distance, is_multi, 
 
 
 bpy.utils.register_class(op)
-         use_selected_to_active=is_multi,
-                normal_space=modes[mode].normal_space,
-
-                # Use Cage and assign object
-                use_cage=True,
-                cage_object=obj_cage.name
-            )
-
-
-bpy.utils.register_class(op)
