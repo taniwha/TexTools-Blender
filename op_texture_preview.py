@@ -65,6 +65,7 @@ def preview_texture(self, context):
             break
 
     if image:
+        material = utilities_bake.get_image_material(image)
         for obj in objects:
             print("Map {}".format(obj.name))
 
@@ -78,8 +79,7 @@ def preview_texture(self, context):
 
             # Create material with image
             bpy.ops.object.material_slot_add()
-            obj.material_slots[0].material = utilities_bake.get_image_material(
-                image)
+            obj.material_slots[0].material = material
             obj.display_type = 'TEXTURED'
 
         # Re-Select objects
@@ -91,7 +91,11 @@ def preview_texture(self, context):
             # Change View mode to TEXTURED
             for space in view_area.spaces:
                 if space.type == 'VIEW_3D':
-                    space.shading.type = 'MATERIAL'
+                    if  bpy.context.scene.render.engine == 'BLENDER_WORKBENCH':
+                        space.shading.type = 'SOLID'
+                        space.shading.color_type = 'TEXTURE'
+                    else:
+                        space.shading.type = 'MATERIAL'
 
             # Enter local view
             # bpy.ops.view3d.localview({'area': view_area})
