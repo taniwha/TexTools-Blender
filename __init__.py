@@ -1467,6 +1467,9 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
 
+    #Unregister Icons
+    utilities_ui.icon_unregister()
+
 
     #Unregister Settings
     del bpy.types.Scene.texToolsSettings

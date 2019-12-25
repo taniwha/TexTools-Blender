@@ -62,6 +62,10 @@ def icon_register(fileName):
     preview_icons.load(name, os.path.join(icons_dir, fileName), 'IMAGE')
 
 
+def icon_unregister():
+    preview_icons.clear()
+
+
 def get_padding():
     size_min = min(
         bpy.context.scene.texToolsSettings.size[0], bpy.context.scene.texToolsSettings.size[1])
