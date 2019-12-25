@@ -72,11 +72,11 @@ def set_texel_density(self, context, mode, density):
         if image:
             object_images[obj] = image
 
-    # Warning: No valid images
-    if len(object_images) == 0:
-        self.report({'ERROR_INVALID_INPUT'},
-                    "No Texture found. Assign Checker map or texture.")
-        return
+    fallback_image = None
+    for area in bpy.context.screen.areas:
+        if area.type == 'IMAGE_EDITOR':
+            fallback_image = area.spaces[0].image
+            break
 
     for obj in object_faces:
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -85,7 +85,11 @@ def set_texel_density(self, context, mode, density):
         obj.select_set(state=True, view_layer=None)
 
         # Find image of object
-        image = object_images[obj]
+        if obj in object_images:
+            image = object_images[obj]
+        else: 
+            image = fallback_image
+
         if image:
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.context.scene.tool_settings.use_uv_select_sync = False
