@@ -15,49 +15,35 @@ def get_selected_object_faces():
 
     previous_mode = bpy.context.object.mode
 
-    if bpy.context.object.mode == 'EDIT':
+    if bpy.context.mode == 'EDIT_MESH':
         # Only selected Mesh faces
-        obj = bpy.context.active_object
-        if obj.type == 'MESH' and obj.data.uv_layers:
-            bm = bmesh.from_edit_mesh(obj.data)
-            bm.faces.ensure_lookup_table()
-            object_faces_indexies[obj] = [face.index for face in bm.faces if face.select]
-    else:
-        # Selected objects with all faces each
-        selected_objects = [obj for obj in bpy.context.selected_objects]
-        for obj in selected_objects:
+        for obj in bpy.context.objects_in_mode:
             if obj.type == 'MESH' and obj.data.uv_layers:
-                bpy.ops.object.mode_set(mode='OBJECT')
-                bpy.ops.object.select_all(action='DESELECT')
-                bpy.context.view_layer.objects.active = obj
-                obj.select_set( state = True, view_layer = None)
-
-                bpy.ops.object.mode_set(mode='EDIT')
                 bm = bmesh.from_edit_mesh(obj.data)
                 bm.faces.ensure_lookup_table()
+                object_faces_indexies[obj] = [face.index for face in bm.faces if face.select]
+    else:
+        # Selected objects with all faces each
+        selected_objects = bpy.context.selected_objects
+        for obj in selected_objects:
+            if obj.type == 'MESH' and obj.data.uv_layers:
+                bm = bmesh.new()
+                bm.from_mesh(obj.data)
+                bm.faces.ensure_lookup_table()
                 object_faces_indexies[obj] = [face.index for face in bm.faces]
-
-    bpy.ops.object.mode_set(mode=previous_mode)
 
     return object_faces_indexies
 
 
 
 def get_object_texture_image(obj):
-
-    previous_mode = bpy.context.active_object.mode
-    bpy.ops.object.mode_set(mode='OBJECT')
-
     # Search in material & texture slots
     for slot_mat in obj.material_slots:
-
         if slot_mat.material:
-
             # Check for traditional texture slots in material
             for slot_tex in slot_mat.material.texture_paint_slots:
                 if slot_tex and slot_tex.texture and hasattr(slot_tex.texture , 'image'):
                     return slot_tex.texture.image
-
             # Check if material uses Nodes
             if hasattr(slot_mat.material , 'node_tree'):
                 if slot_mat.material.node_tree:
@@ -65,9 +51,6 @@ def get_object_texture_image(obj):
                         if type(node) is bpy.types.ShaderNodeTexImage:
                             if node.image:
                                 return node.image
-
-    
-
     return None
 
 

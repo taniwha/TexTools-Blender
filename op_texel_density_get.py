@@ -49,7 +49,6 @@ class op(bpy.types.Operator):
 def get_texel_density(self, context):
     print("Get texel density")
 
-    edit_mode = bpy.context.object.mode == 'EDIT'
     object_faces = utilities_texel.get_selected_object_faces()
 
     # Warning: No valid input objects
@@ -78,11 +77,6 @@ def get_texel_density(self, context):
 
     # Get area for each triangle in view and UV
     for obj in object_faces:
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.ops.object.select_all(action='DESELECT')
-        bpy.context.view_layer.objects.active = obj
-        obj.select_set( state = True, view_layer = None)
-
         # Find image of object
         if obj in object_images:
             image = object_images[obj]
@@ -90,11 +84,14 @@ def get_texel_density(self, context):
             image = fallback_image
 
         if image:
-            bpy.ops.object.mode_set(mode='EDIT')
-            bm = bmesh.from_edit_mesh(obj.data)
+            if bpy.context.mode == 'EDIT_MESH':
+                bm = bmesh.from_edit_mesh(obj.data)
+            else:
+                bm = bmesh.new()
+                bm.from_mesh(obj.data)
             uv_layers = bm.loops.layers.uv.verify()
             bm.faces.ensure_lookup_table()
-            
+
             for index in object_faces[obj]:
                 face = bm.faces[index]
 
@@ -117,15 +114,6 @@ def get_texel_density(self, context):
                 )
                 sum_area_vt+= math.sqrt( face_area_vt )
                 sum_area_uv+= math.sqrt( face_area_uv ) * min(image.size[0], image.size[1])
-
-    # Restore selection
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.object.select_all(action='DESELECT')
-    for obj in object_faces:
-        obj.select_set( state = True, view_layer = None)
-    bpy.context.view_layer.objects.active = list(object_faces.keys())[0]
-    if edit_mode:
-        bpy.ops.object.mode_set(mode='EDIT')
 
     # print("Sum verts area {}".format(sum_area_vt))
     # print("Sum texture area {}".format(sum_area_uv))
