@@ -45,13 +45,7 @@ class op(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        # Store selection
-        utilities_uv.selection_store()
-
         main(context)
-
-        # Restore selection
-        utilities_uv.selection_restore()
 
         return {'FINISHED'}
 
@@ -59,22 +53,29 @@ class op(bpy.types.Operator):
 def main(context):
     print("Executing operator_island_align_edge")
 
+    objects = utilities_uv.get_edit_objects()
+
+    # Store selection
+    utilities_uv.selection_store(objects)
+
     bm = bmesh.from_edit_mesh(bpy.context.active_object.data)
     uv_layers = bm.loops.layers.uv.verify()
 
     faces_selected = []
-    for face in bm.faces:
-        if face.select:
-            for loop in face.loops:
-                if loop[uv_layers].select:
-                    faces_selected.append(face)
-                    break
+    for obj, bm, uv_layers in objects:
+        for face in bm.faces:
+            if face.select:
+                for loop in face.loops:
+                    if loop[uv_layers].select:
+                        faces_selected.append((face, uv_layers))
+                        break
 
     print("faces_selected: "+str(len(faces_selected)))
 
     # Collect 2 uv verts for each island
     face_uvs = {}
-    for face in faces_selected:
+    for f_uv in faces_selected:
+        face, uv_layers = f_uv
         uvs = []
         for loop in face.loops:
             if loop[uv_layers].select:
@@ -82,46 +83,47 @@ def main(context):
                 if len(uvs) >= 2:
                     break
         if len(uvs) >= 2:
-            face_uvs[face] = uvs
+            face_uvs[f_uv] = uvs
 
     faces_islands = {}
     faces_unparsed = faces_selected.copy()
-    for face in face_uvs:
-        if face in faces_unparsed:
-
+    for face_uv in face_uvs:
+        if face_uv in faces_unparsed:
+            face, uvl = face_uv
             bpy.ops.uv.select_all(action='DESELECT')
-            face_uvs[face][0].select = True
+            face_uvs[face_uv][0].select = True
             bpy.ops.uv.select_linked()  # Extend selection
 
             # Collect faces
-            faces_island = [face]
-            for f in faces_unparsed:
+            faces_island = [face_uv]
+            for f_uv in faces_unparsed:
+                f, uv_layers = f_uv
                 if f != face and f.select and f.loops[0][uv_layers].select:
                     print("append "+str(f.index))
-                    faces_island.append(f)
+                    faces_island.append(f_uv)
             for f in faces_island:
                 faces_unparsed.remove(f)
 
             # Assign Faces to island
-            faces_islands[face] = faces_island
+            faces_islands[face_uv] = faces_island
 
     print("Sets: {}x".format(len(faces_islands)))
 
     # Align each island to its edges
     for face in faces_islands:
-        align_island(face_uvs[face][0].uv, face_uvs[face]
-                     [1].uv, faces_islands[face])
+        align_island(face_uvs[face][0].uv, face_uvs[face][1].uv,
+                     faces_islands[face])
+
+    # Restore selection
+    utilities_uv.selection_restore(objects)
 
 
 def align_island(uv_vert0, uv_vert1, faces):
-    bm = bmesh.from_edit_mesh(bpy.context.active_object.data)
-    uv_layers = bm.loops.layers.uv.verify()
-
     print("Align {}x faces".format(len(faces)))
 
     # Select faces
     bpy.ops.uv.select_all(action='DESELECT')
-    for face in faces:
+    for face, uv_layers in faces:
         for loop in face.loops:
             loop[uv_layers].select = True
 
