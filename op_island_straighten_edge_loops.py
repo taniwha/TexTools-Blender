@@ -49,27 +49,26 @@ class op(bpy.types.Operator):
 
 def main(context):
     print("____________________________")
-
+    objects = utilities_uv.get_edit_objects()
     # Store selection
-    utilities_uv.selection_store()
+    utilities_uv.selection_store(objects)
 
-    bm = bmesh.from_edit_mesh(bpy.context.active_object.data)
-    uv_layers = bm.loops.layers.uv.verify()
-
-    edges = utilities_uv.get_selected_uv_edges(bm, uv_layers)
-    islands = utilities_uv.getSelectionIslands()
-    uvs = utilities_uv.get_selected_uvs(bm, uv_layers)
+    edges = utilities_uv.get_selected_uv_edges(objects)
+    islands = utilities_uv.getSelectionIslands(objects)
+    uvs = utilities_uv.get_selected_uvs(objects)
     faces = [f for island in islands for f in island]
+
+    #objects is a list of (object, bmesh, uv_layers)
+    #so make dict of bmesh:uv_layers
+    uvlayer_map = dict(map(lambda o: o[1:3], objects))
 
     # Get island faces
 
-    # utilities_uv.selection_restore(bm, uv_layers)
-
-    groups = get_edge_groups(bm, uv_layers, faces, edges, uvs)
+    groups = get_edge_groups(objects, edges)
 
     bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='FACE')
     bpy.ops.mesh.select_all(action='DESELECT')
-    for face in faces:
+    for face, uvl in faces:
         face.select = True
 
     print("Edges {}x".format(len(edges)))
@@ -82,7 +81,8 @@ def main(context):
     bpy.ops.uv.pin(clear=True)
 
     edge_sets = []
-    for edges in groups:
+    for edges, bm in groups:
+        uv_layers = uvlayer_map[bm]
         edge_sets.append(EdgeSet(bm, uv_layers, edges, faces))
         # straighten_edges(bm, uv_layers, edges, faces)
 
@@ -92,7 +92,7 @@ def main(context):
         edge_set.straighten()
 
     # Restore selection
-    utilities_uv.selection_restore()
+    utilities_uv.selection_restore(objects)
 
 
 class EdgeSet:
@@ -215,16 +215,17 @@ class EdgeSet:
         bpy.ops.uv.pin(clear=True)
 
 
-def get_edge_groups(bm, uv_layers, faces, edges, uvs):
+def get_edge_groups(objects, edges):
     print("Get edge groups, edges {}x".format(len(edges))+"x")
 
     bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='EDGE')
 
-    unmatched = edges.copy()
+    unmatched = {e[0] for e in edges}
+    edgeset = unmatched.copy()
 
     groups = []
 
-    for edge in edges:
+    for edge, bm in edges:
         if edge in unmatched:
 
             # Loop select edge
@@ -233,8 +234,8 @@ def get_edge_groups(bm, uv_layers, faces, edges, uvs):
             bpy.ops.mesh.loop_multi_select(ring=False)
 
             # Isolate group within edges
-            group = [e for e in bm.edges if e.select and e in edges]
-            groups.append(group)
+            group = [e for e in bm.edges if e.select and e in edgeset]
+            groups.append((group, bm))
 
             # Remove from unmatched
             for e in group:
