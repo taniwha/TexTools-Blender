@@ -58,9 +58,9 @@ class op(bpy.types.Operator):
 
 def main(context, isVertical, padding):
     print("Executing IslandsAlignSort main {}".format(padding))
-
+    objects = utilities_uv.get_edit_objects()
     # Store selection
-    utilities_uv.selection_store()
+    utilities_uv.selection_store(objects)
 
     if bpy.context.tool_settings.transform_pivot_point != 'CURSOR':
         bpy.context.tool_settings.transform_pivot_point = 'CURSOR'
@@ -72,9 +72,9 @@ def main(context, isVertical, padding):
     bm = bmesh.from_edit_mesh(bpy.context.active_object.data)
     uv_layers = bm.loops.layers.uv.verify()
 
-    boundsAll = utilities_uv.getSelectionBBox()
+    boundsAll = utilities_uv.getSelectionBBox(objects)
 
-    islands = utilities_uv.getSelectionIslands()
+    islands = utilities_uv.getSelectionIslands(objects)
     allSizes = {}  # https://stackoverflow.com/questions/613183/sort-a-python-dictionary-by-value
     allBounds = {}
 
@@ -84,10 +84,10 @@ def main(context, isVertical, padding):
 
     # Rotate to minimal bounds
     for i in range(0, len(islands)):
-        alignIslandMinimalBounds(uv_layers, islands[i])
+        alignIslandMinimalBounds(objects, islands[i])
 
         # Collect BBox sizes
-        bounds = utilities_uv.getSelectionBBox()
+        bounds = utilities_uv.getSelectionBBox(objects)
         allSizes[i] = max(bounds['width'], bounds['height']) + \
             i*0.000001  # Make each size unique
         allBounds[i] = bounds
@@ -125,10 +125,10 @@ def main(context, isVertical, padding):
             offset += bounds['width']+padding
 
     # Restore selection
-    utilities_uv.selection_restore()
+    utilities_uv.selection_restore(objects)
 
 
-def alignIslandMinimalBounds(uv_layers, faces):
+def alignIslandMinimalBounds(objects, faces):
     # Select Island
     bpy.ops.uv.select_all(action='DESELECT')
     utilities_uv.set_selected_faces(faces)
@@ -136,13 +136,13 @@ def alignIslandMinimalBounds(uv_layers, faces):
     steps = 8
     angle = 45    # Starting Angle, half each step
 
-    bboxPrevious = utilities_uv.getSelectionBBox()
+    bboxPrevious = utilities_uv.getSelectionBBox(objects)
 
     for i in range(0, steps):
         # Rotate right
         bpy.ops.transform.rotate(
             value=(angle * math.pi / 180), orient_axis='Z')
-        bbox = utilities_uv.getSelectionBBox()
+        bbox = utilities_uv.getSelectionBBox(objects)
 
         if i == 0:
             sizeA = bboxPrevious['width'] * bboxPrevious['height']
@@ -159,7 +159,7 @@ def alignIslandMinimalBounds(uv_layers, faces):
             # Rotate Left
             bpy.ops.transform.rotate(
                 value=(-angle*2 * math.pi / 180), orient_axis='Z')
-            bbox = utilities_uv.getSelectionBBox()
+            bbox = utilities_uv.getSelectionBBox(objects)
             if bbox['minLength'] < bboxPrevious['minLength']:
                 bboxPrevious = bbox    # Success
             else:
