@@ -51,21 +51,18 @@ class op(bpy.types.Operator):
 
 
 def main(context, angle):
-    
+    objects = utilities_uv.get_edit_objects()
     #Store selection
-    utilities_uv.selection_store()
+    utilities_uv.selection_store(objects)
 
-    bm = bmesh.from_edit_mesh(bpy.context.active_object.data)
-    uv_layers = bm.loops.layers.uv.verify()
-    
     bpy.ops.uv.select_linked()
 
     #Bounds
-    bounds_initial = utilities_uv.getSelectionBBox()
+    bounds_initial = utilities_uv.getSelectionBBox(objects)
     bpy.ops.transform.rotate(value=angle, orient_axis='Z', constraint_axis=(False, False, False), use_proportional_edit=False)
 
     #Align rotation to top left|right
-    bounds_post = utilities_uv.getSelectionBBox()
+    bounds_post = utilities_uv.getSelectionBBox(objects)
     dy = bounds_post['max'].y - bounds_initial['max'].y
     dx = 0
     if angle > 0:
@@ -76,6 +73,6 @@ def main(context, angle):
 
 
     #Restore selection
-    utilities_uv.selection_restore()
+    utilities_uv.selection_restore(objects)
 
 bpy.utils.register_class(op)
