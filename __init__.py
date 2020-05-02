@@ -1308,7 +1308,7 @@ def menu_IMAGE_uvs(self, context):
     layout.operator(op_island_align_edge.op.bl_idname, text="Align Edge", icon_value = icon_get("op_island_align_edge"))
     layout.operator(op_island_align_world.op.bl_idname, text="Align World", icon_value = icon_get("op_island_align_world"))
 
-    layout.menu(VIEW3D_MT_submenu_align)
+    layout.menu("VIEW3D_MT_submenu_align")
 
 class VIEW3D_MT_submenu_align(bpy.types.Menu):
     bl_label="Align"
