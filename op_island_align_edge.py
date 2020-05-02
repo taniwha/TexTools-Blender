@@ -135,9 +135,8 @@ def align_island(uv_vert0, uv_vert1, faces):
 
     bpy.ops.uv.select_linked()
 
-    bpy.context.tool_settings.transform_pivot_point = 'CURSOR'
+    bpy.context.space_data.pivot_point = 'CURSOR'
     bpy.ops.uv.cursor_set(location=uv_vert0 + diff/2)
-
 
     bpy.ops.transform.rotate(value=angle, orient_axis='Z', constraint_axis=(
         False, False, False), orient_type='GLOBAL', mirror=False, use_proportional_edit=False)
