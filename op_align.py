@@ -45,78 +45,79 @@ class op(bpy.types.Operator):
         align(context, self.direction)
         return {'FINISHED'}
 
-
+from pprint import pprint
 def align(context, direction):
-    # Store selection
-    utilities_uv.selection_store()
-
-    if bpy.context.tool_settings.transform_pivot_point != 'CURSOR':
-        bpy.context.tool_settings.transform_pivot_point = 'CURSOR'
-
-    # B-Mesh
-    obj = bpy.context.active_object
-    bm = bmesh.from_edit_mesh(obj.data)
-    uv_layers = bm.loops.layers.uv.verify()
-
-    if len(obj.data.uv_layers) == 0:
-        print("There is no UV channel or UV data set")
+    if direction not in ["bottom", "top", "left", "right"]:
+        print("Unkown direction: "+str(direction))
         return
 
+    objects = utilities_uv.get_edit_objects()
+    # Store selection
+    utilities_uv.selection_store(objects)
+
+    #if len(obj.data.uv_layers) == 0:
+    #    print("There is no UV channel or UV data set")
+    #    return
+
     # Collect BBox sizes
-    boundsAll = utilities_uv.getSelectionBBox()
+    boundsAll = utilities_uv.getSelectionBBox(objects)
 
     mode = bpy.context.scene.tool_settings.uv_select_mode
     if mode == 'FACE' or mode == 'ISLAND':
         print("____ Align Islands")
 
         # Collect UV islands
-        islands = utilities_uv.getSelectionIslands()
+        islands = utilities_uv.getSelectionIslands(objects)
 
         for island in islands:
 
             bpy.ops.uv.select_all(action='DESELECT')
             utilities_uv.set_selected_faces(island)
-            bounds = utilities_uv.getSelectionBBox()
+            bounds = utilities_uv.getSelectionBBox(objects)
 
             # print("Island "+str(len(island))+"x faces, delta: "+str(delta.y))
 
             if direction == "bottom":
                 delta = boundsAll['min'] - bounds['min']
-                bpy.ops.transform.translate(value=(0, delta.y, 0))
+                delta.x = 0
             elif direction == "top":
                 delta = boundsAll['max'] - bounds['max']
-                bpy.ops.transform.translate(value=(0, delta.y, 0))
+                delta.x = 0
             elif direction == "left":
                 delta = boundsAll['min'] - bounds['min']
-                bpy.ops.transform.translate(value=(delta.x, 0, 0))
+                delta.y = 0
             elif direction == "right":
                 delta = boundsAll['max'] - bounds['max']
-                bpy.ops.transform.translate(value=(delta.x, 0, 0))
-            else:
-                print("Unkown direction: "+str(direction))
+                delta.y = 0
+            for f_uv in island:
+                f, uv_layers = f_uv
+                for l in f.loops:
+                    luv = l[uv_layers]
+                    luv.uv += delta
 
     elif mode == 'EDGE' or mode == 'VERTEX':
         print("____ Align Verts")
 
-        for f in bm.faces:
-            if f.select:
-                for l in f.loops:
-                    luv = l[uv_layers]
-                    if luv.select:
-                        # print("Idx: "+str(luv.uv))
-                        if direction == "top":
-                            luv.uv[1] = boundsAll['max'].y
-                        elif direction == "bottom":
-                            luv.uv[1] = boundsAll['min'].y
-                        elif direction == "left":
-                            luv.uv[0] = boundsAll['min'].x
-                        elif direction == "right":
-                            luv.uv[0] = boundsAll['max'].x
+        for obj, bm, uv_layers in objects:
+            for f in bm.faces:
+                if f.select:
+                    for l in f.loops:
+                        luv = l[uv_layers]
+                        if luv.select:
+                            # print("Idx: "+str(luv.uv))
+                            if direction == "top":
+                                luv.uv[1] = boundsAll['max'].y
+                            elif direction == "bottom":
+                                luv.uv[1] = boundsAll['min'].y
+                            elif direction == "left":
+                                luv.uv[0] = boundsAll['min'].x
+                            elif direction == "right":
+                                luv.uv[0] = boundsAll['max'].x
 
         bmesh.update_edit_mesh(obj.data)
 
     # Restore selection
-    utilities_uv.selection_restore()
+    utilities_uv.selection_restore(objects)
 
 
 bpy.utils.register_class(op)
