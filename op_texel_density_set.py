@@ -95,7 +95,8 @@ def set_texel_density(self, context, mode, density):
             bpy.context.scene.tool_settings.use_uv_select_sync = False
 
             # Store selection
-            utilities_uv.selection_store()
+            objects = utilities_uv.get_edit_objects()
+            utilities_uv.selection_store(objects)
 
             bm = bmesh.from_edit_mesh(obj.data)
             uv_layers = bm.loops.layers.uv.verify()
@@ -106,7 +107,7 @@ def set_texel_density(self, context, mode, density):
                 # Collect selected faces as islands
                 bm.faces.ensure_lookup_table()
                 bpy.ops.uv.select_all(action='SELECT')
-                group_faces = utilities_uv.getSelectionIslands()
+                group_faces = utilities_uv.getSelectionIslands(objects)
 
             elif mode == 'ALL':
                 # Scale all UV's together
@@ -116,7 +117,7 @@ def set_texel_density(self, context, mode, density):
                 # Scale each UV idland centered
                 bpy.ops.mesh.select_all(action='SELECT')
                 bpy.ops.uv.select_all(action='SELECT')
-                group_faces = utilities_uv.getSelectionIslands()
+                group_faces = utilities_uv.getSelectionIslands(objects)
 
             print("group_faces {}x".format(len(group_faces)))
 
@@ -124,7 +125,7 @@ def set_texel_density(self, context, mode, density):
                 # Get triangle areas
                 sum_area_vt = 0
                 sum_area_uv = 0
-                for face in group:
+                for face, uv_layers in group:
                     # Triangle Verts
                     triangle_uv = [loop[uv_layers].uv for loop in face.loops]
                     triangle_vt = [obj.matrix_world @
@@ -165,7 +166,7 @@ def set_texel_density(self, context, mode, density):
                 # Select Face loops and scale
                 bpy.ops.uv.select_all(action='DESELECT')
                 bpy.context.scene.tool_settings.uv_select_mode = 'VERTEX'
-                for face in group:
+                for face, uv_layers in group:
                     for loop in face.loops:
                         loop[uv_layers].select = True
 
@@ -174,7 +175,7 @@ def set_texel_density(self, context, mode, density):
                     value=(scale, scale, 1), use_proportional_edit=False)
 
             # Restore selection
-            utilities_uv.selection_restore()
+            utilities_uv.selection_restore(objects)
 
     # Restore selection
     bpy.ops.object.mode_set(mode='OBJECT')
